@@ -1,10 +1,1 @@
 node_modules/
-*/node_modules/
-*/.cache/*/*.*
-*/dist/*.*.*
-*/dist/
-*/dist/*
-dist/
-
-Maps/dist/src.f10117fe.js
-Maps/dist/src.f10117fe.js.map
