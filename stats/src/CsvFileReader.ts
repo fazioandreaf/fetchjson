@@ -1,15 +1,9 @@
 import {readFileSync} from 'fs';
-import { MatchResults } from './MatchResults';
 
-//tuple
-// type MatchData = [Date, string, string, number, number, MatchResults, string]
-
-export default abstract class CsvFileReader<TypeOfData> {
+export default class CsvFileReader {
     constructor(public filename: string) {}
 
-    abstract mapRow(row: string[]) : TypeOfData;
-
-    data: TypeOfData[] = [];
+    data: string[][] = [];
 
     read(): void {
         this.data = readFileSync(this.filename, {
@@ -19,6 +13,5 @@ export default abstract class CsvFileReader<TypeOfData> {
         .map((row: string): string[] => {
             return row.split(',')
         })
-        .map(row => this.mapRow(row))
     }
 }
