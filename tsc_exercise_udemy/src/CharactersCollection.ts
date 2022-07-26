@@ -1,5 +1,9 @@
-export default class CharactersCollection {
-    constructor(public data: string) {}
+import Sorter from "./Sorter";
+
+export default class CharactersCollection extends Sorter {
+    constructor(public data: string) {
+        super();
+    }
 
     // can call this function without the ()
     get length(): number {
