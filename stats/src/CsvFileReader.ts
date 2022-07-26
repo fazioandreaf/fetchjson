@@ -1,24 +1,15 @@
 import {readFileSync} from 'fs';
-import { dateStringToDate } from './utils';
 import { MatchResults } from './MatchResults';
 
-// interface Row {
-//     date: Date,
-//     homeTeam: string,
-//     awayTeam: string,
-//     homeGoal: number,
-//     awayGoal: number,
-//     result: MatchResults,
-//     stadium: string
-// }
-
 //tuple
-type MatchData = [Date, string, string, number, number, MatchResults, string]
+// type MatchData = [Date, string, string, number, number, MatchResults, string]
 
-export default class CsvFileReader {
+export default abstract class CsvFileReader<TypeOfData> {
     constructor(public filename: string) {}
 
-    data: MatchData[] = [];
+    abstract mapRow(row: string[]) : TypeOfData;
+
+    data: TypeOfData[] = [];
 
     read(): void {
         this.data = readFileSync(this.filename, {
@@ -28,20 +19,6 @@ export default class CsvFileReader {
         .map((row: string): string[] => {
             return row.split(',')
         })
-        .map((row: string[]): MatchData => {
-            return [
-                dateStringToDate(row[0]),
-                row[1],
-                row[2],
-                parseInt(row[3]),
-                parseInt(row[4]),
-                // assertions
-                row[5] as MatchResults,
-                row[6]
-            ]
-        })
+        .map(row => this.mapRow(row))
     }
-
-
-
 }

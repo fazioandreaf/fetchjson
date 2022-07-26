@@ -3,9 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const CsvFileReader_1 = __importDefault(require("./CsvFileReader"));
+// import CsvFileReader from "./CsvFileReader";
 const MatchResults_1 = require("./MatchResults");
-let matches = new CsvFileReader_1.default('./src/football.csv');
+const MatchReader_1 = __importDefault(require("./MatchReader"));
+let matches = new MatchReader_1.default('./src/football.csv');
 let manUnitedWins = 0;
 matches.read();
 // console.log(matches.data[0])
