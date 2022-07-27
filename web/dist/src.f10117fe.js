@@ -4615,7 +4615,7 @@ module.exports.default = axios;
 
 },{"./utils":"node_modules/axios/lib/utils.js","./helpers/bind":"node_modules/axios/lib/helpers/bind.js","./core/Axios":"node_modules/axios/lib/core/Axios.js","./core/mergeConfig":"node_modules/axios/lib/core/mergeConfig.js","./defaults":"node_modules/axios/lib/defaults/index.js","./cancel/CanceledError":"node_modules/axios/lib/cancel/CanceledError.js","./cancel/CancelToken":"node_modules/axios/lib/cancel/CancelToken.js","./cancel/isCancel":"node_modules/axios/lib/cancel/isCancel.js","./env/data":"node_modules/axios/lib/env/data.js","./helpers/toFormData":"node_modules/axios/lib/helpers/toFormData.js","../lib/core/AxiosError":"node_modules/axios/lib/core/AxiosError.js","./helpers/spread":"node_modules/axios/lib/helpers/spread.js","./helpers/isAxiosError":"node_modules/axios/lib/helpers/isAxiosError.js"}],"node_modules/axios/index.js":[function(require,module,exports) {
 module.exports = require('./lib/axios');
-},{"./lib/axios":"node_modules/axios/lib/axios.js"}],"src/models/Sync.ts":[function(require,module,exports) {
+},{"./lib/axios":"node_modules/axios/lib/axios.js"}],"src/models/APISync.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -4627,22 +4627,22 @@ var __importDefault = this && this.__importDefault || function (mod) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Sync = void 0;
+exports.APISync = void 0;
 
 var axios_1 = __importDefault(require("axios"));
 
-var Sync =
+var APISync =
 /** @class */
 function () {
-  function Sync(rootUrl) {
+  function APISync(rootUrl) {
     this.rootUrl = rootUrl;
   }
 
-  Sync.prototype.fetch = function (id) {
+  APISync.prototype.fetch = function (id) {
     return axios_1.default.get("".concat(this.rootUrl, "/").concat(id));
   };
 
-  Sync.prototype.save = function (data) {
+  APISync.prototype.save = function (data) {
     var id = data.id;
 
     if (id) {
@@ -4652,63 +4652,46 @@ function () {
     }
   };
 
-  return Sync;
+  return APISync;
 }();
 
-exports.Sync = Sync;
-},{"axios":"node_modules/axios/index.js"}],"src/models/User.ts":[function(require,module,exports) {
+exports.APISync = APISync;
+},{"axios":"node_modules/axios/index.js"}],"src/models/Model.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.User = void 0;
+exports.Model = void 0;
 
-var Attributes_1 = require("./Attributes");
-
-var Eventing_1 = require("./Eventing");
-
-var Sync_1 = require("./Sync");
-
-var rootUrl = 'http://localhost:3000/users';
-
-var User =
+var Model =
 /** @class */
 function () {
-  function User(attrs) {
-    this.events = new Eventing_1.Eventing();
-    this.sync = new Sync_1.Sync(rootUrl);
-    this.attributes = new Attributes_1.Attributes(attrs);
+  function Model(attributes, events, sync) {
+    this.attributes = attributes;
+    this.events = events;
+    this.sync = sync; // get trigger() {
+    //     return this.events.trigger;
+    // }
+    // get get() {
+    //     return this.attributes.get;
+    // }
+    // get on() {
+    //     return this.events.on;
+    // }
+    // this is equivelent of
+
+    this.on = this.events.on;
+    this.trigger = this.events.trigger;
+    this.get = this.attributes.get;
   }
 
-  Object.defineProperty(User.prototype, "on", {
-    get: function get() {
-      return this.events.on;
-    },
-    enumerable: false,
-    configurable: true
-  });
-  Object.defineProperty(User.prototype, "trigger", {
-    get: function get() {
-      return this.events.trigger;
-    },
-    enumerable: false,
-    configurable: true
-  });
-  Object.defineProperty(User.prototype, "get", {
-    get: function get() {
-      return this.attributes.get;
-    },
-    enumerable: false,
-    configurable: true
-  });
-
-  User.prototype.set = function (update) {
+  Model.prototype.set = function (update) {
     this.attributes.set(update);
     this.events.trigger('change');
   };
 
-  User.prototype.fetch = function () {
+  Model.prototype.fetch = function () {
     var _this = this;
 
     var id = this.get('id');
@@ -4722,7 +4705,7 @@ function () {
     });
   };
 
-  User.prototype.save = function () {
+  Model.prototype.save = function () {
     var _this = this;
 
     this.sync.save(this.attributes.getAll()).then(function (res) {
@@ -4732,11 +4715,130 @@ function () {
     });
   };
 
-  return User;
+  return Model;
 }();
 
+exports.Model = Model;
+},{}],"src/models/Collection.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Collection = void 0;
+
+var Eventing_1 = require("./Eventing");
+
+var axios_1 = __importDefault(require("axios"));
+
+var Collection =
+/** @class */
+function () {
+  function Collection(rootUrl, deserialize) {
+    this.rootUrl = rootUrl;
+    this.deserialize = deserialize;
+    this.models = [];
+    this.events = new Eventing_1.Eventing();
+    this.on = this.events.on;
+    this.trigger = this.events.trigger;
+  }
+
+  ;
+
+  Collection.prototype.fetch = function () {
+    var _this = this;
+
+    axios_1.default.get(this.rootUrl).then(function (res) {
+      res.data.forEach(function (value) {
+        _this.models.push(_this.deserialize(value));
+      });
+
+      _this.trigger('change');
+    });
+  };
+
+  return Collection;
+}();
+
+exports.Collection = Collection;
+},{"./Eventing":"src/models/Eventing.ts","axios":"node_modules/axios/index.js"}],"src/models/User.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    if (typeof b !== "function" && b !== null) throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.User = void 0;
+
+var Attributes_1 = require("./Attributes");
+
+var Eventing_1 = require("./Eventing");
+
+var APISync_1 = require("./APISync");
+
+var Model_1 = require("./Model");
+
+var Collection_1 = require("./Collection");
+
+var rootUrl = 'http://localhost:3000/users';
+
+var User =
+/** @class */
+function (_super) {
+  __extends(User, _super);
+
+  function User() {
+    return _super !== null && _super.apply(this, arguments) || this;
+  }
+
+  User.build = function (attrs) {
+    return new User(new Attributes_1.Attributes(attrs), new Eventing_1.Eventing(), new APISync_1.APISync(rootUrl));
+  };
+
+  User.buildUserCollection = function () {
+    return new Collection_1.Collection(rootUrl, function (json) {
+      return User.build(json);
+    });
+  };
+
+  return User;
+}(Model_1.Model);
+
 exports.User = User;
-},{"./Attributes":"src/models/Attributes.ts","./Eventing":"src/models/Eventing.ts","./Sync":"src/models/Sync.ts"}],"src/index.ts":[function(require,module,exports) {
+},{"./Attributes":"src/models/Attributes.ts","./Eventing":"src/models/Eventing.ts","./APISync":"src/models/APISync.ts","./Model":"src/models/Model.ts","./Collection":"src/models/Collection.ts"}],"src/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4745,27 +4847,11 @@ Object.defineProperty(exports, "__esModule", {
 
 var User_1 = require("./models/User");
 
-var user = new User_1.User({
-  id: 1,
-  name: 'LizzoOLO',
-  age: 34
-}); // user.set({name: 'ciao'})
-// user.on('changeHandler', () => {console.log('it work')})
-// user.on('changeHandler', () => {console.log('it work 2')})
-// user.trigger('changeHandler')
-// user.on('ciaone', () => {})
-// // console.log(user.get('name'))
-// // console.log(user.get('age'))
-// console.log(user)
-// const user = new User({id: 1});
-// user.fetch();
-// user.set({name: 'New Name'})
-// user.save()
-// console.log(user.get('name'));
-// user.on('change', () => { console.log(user)});
-// user.on('save', () => {console.log(user)});
-// user.set({name: 'New Name'});
-// user.save()
+var collection = User_1.User.buildUserCollection();
+collection.fetch();
+collection.events.on('change', function () {
+  console.log(collection);
+});
 },{"./models/User":"src/models/User.ts"}],"../../../../AppData/Roaming/nvm/v14.17.0/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -4794,7 +4880,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61767" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50850" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
